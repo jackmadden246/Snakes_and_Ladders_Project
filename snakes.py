@@ -1,6 +1,5 @@
 import random
 import itertools
-import time
 
 """
 SNAKES AND LADDERS GAME
@@ -12,62 +11,78 @@ If there is a ladder in the square the player is currently in, they move to the 
 If there is a snake in the square the player is currently in, they move to the square with the tail of the snake.
 """
 
-# Snakes and ladders do basically the same thing, they take the player to another square. I put them
-# here together, so it would be easier to check later.
+# Snakes and ladders have been separated to create individual snakes and ladders for the player to interact with
 
-ladders = [27, 35, 39, 50, 59, 66, 73, 76, 89, 97, 99, 2, 8, 22, 28, 30, 44, 54, 70, 80, 87]
+ladders = {"ladder1":[27, 35, 39, 50], "ladder2" : [59, 66, 73, 76],
+           "ladder3": [89, 97, 99, 2],"ladder4": [8, 22, 28, 30], "ladder5": [44, 54, 70, 80, 87]}
 
-snakes = [7, 5, 3, 34, 46, 24, 12, 63, 67, 86, 26, 23, 29, 41, 77, 32, 58, 69, 90, 83, 93]
+snakes = {"snake1":[7, 5, 3, 34], "snake2": [46, 24, 12, 63],
+          "snake3": [67, 86, 26, 23], "snake4": [29, 41, 77, 32], "snake5": [58, 69, 90, 83, 93]}
 class Dice:
 
-    # Since all the players will use the same dice to play, there need not be more than one instances of dice
-    # So, it is better if Dice is made static.
+    # Since all the players will use the same dice to play, there does not need to be more than one die,
+    # so Dice is made static.
     @staticmethod
     def roll():
         return random.randint(1, 6)
-
 
 class Player:
     def __init__(self, name):
         self.name = name[0].capitalize()
         self.position = 0
-
+        self.penalty = 0
         # Initially, the player is not playing (meaning she will remain at position 0 till dice shows 1
         self.play = False
+        self.tails = [34, 63, 23, 32, 93]
 
         # Store the last three consecutive moves, we will use this later to check if it equals [6,6,6]
         self.last_three_moves = [0, 0, 0]
 
     def has_won(self):
-        # If position = 100, player has won
-        return self.position == 100
-
+        if self.position == 100:
+            winner = "Congratulations superhero! You have won!!!!!"
+            return winner
+  # if a player reaches the 100th square, they will receive the above message and win
     def update_position(self, dice_value):
-
-        # the following two lines will pop one element(zeroth index element) from the list,
-        # and add the latest dice_value to the list
-        # so that the list will be updated
+        # the following two lines will remove the first element then add the latest dice_value to the list
         self.last_three_moves.pop(0)
         self.last_three_moves.append(dice_value)
-
-        if self.last_three_moves == [6, 6, 6]:
-            self.position = 0
-            self.play = False
-            return
-
         new_pos = self.position + dice_value
 
-        # if new position exceeds 100, don't update the current position
-        # instead, return
-        if new_pos >= 100:
-            return
+        # if player rolls three 6's on the dice, last element is removed and the game continues, otherwise nothing changes
+
+        if self.last_three_moves == [6, 6, 6]:
+            self.last_three_moves.pop()
+
         else:
             self.position = new_pos
+        # if the player rolls a number on the dice greater than 100,
+        # they move back the number of positions they just rolled that is less than 100
+        if self.position >= 95 and new_pos > 100:
+                self.penalty += dice_value
+                self.position -= self.penalty
 
-        # if the new position has a snake or ladder, update the position after snake or ladder
+
+
+        # if the new position has a snake or ladder, their position will be updated depending on what square they are in
         while self.position in snakes or ladders:
             self.position = snakes[self.position] or ladders[self.position]
+        # if the player reaches a square corresponding to a part of the snake
+        # (except if they encounter a square that forms one of the tails of the snakes)
+        # then they move back the corresponding number of squares to the length of that snake
+        # if the player encounters a ladder, they move the number of squares corresponding to the length of the ladder
+        for i in range(len(snakes)):
+            for value in snakes.items():
+                if self.position in snakes[i].value:
+                    self.position -= len(snakes[i])
+            else:
+                if snakes[i].value in self.tails:
+                    self.position += 0
 
+        for i in range(len(ladders)):
+            for value in ladders.items():
+                if self.position == ladders[i].value:
+                    self.position += len(ladders[i])
     def print_position(self):
         print(self.name, "Your position is....==>", str(self.position))
 
@@ -93,12 +108,23 @@ class Player:
                 else:
                     dice_value = Dice.roll()
 class Commentator:
-    def __init__(self, commentator):
-        self.commentator = commentator
+    def __init__(self):
+        self.commentator_snakes = {}
+        self.commentator_ladders = {}
     def commentate(self):
-        if player.print_position() in snakes:
-
-
+        # if the player lands on a square corresponding to a snake or ladder, they get a random comment in relation to their progress
+        if player.position in snakes:
+            commentator_snakes = {"Injury": "Ouch! Looks like a snake bit you. That must have hurt",
+                                 "Training": "You need more training young Padawan, greater challenges await you in the future",
+                                 "Teasing": "Did you feel that? Looks like that snake just gave you a love bite",
+                                  "Loud": "SSSSSSSSSSSSSSSSS, looks like you caught yourself an aggressive one there!"}
+            print(random.choice(list(commentator_snakes.values())))
+        elif player.position in ladders:
+            commentator_ladders = {"Celebration": "Whee eeee! You're moving up in the world!",
+                                   "Idea": "You seem like a whiz at this, maybe your dreams are coming true!",
+                                   "Wonder": "Can you believe it? You may actually win this race!",
+                                   "Awe": "Looks like you are the champion of the world, as Queen would say!"}
+            print(random.choice(list(commentator_ladders.values())))
 
 class SnakesAndLadders:
     def __init__(self, players):
@@ -119,14 +145,15 @@ class SnakesAndLadders:
     def next_player(self):
         return next(self.players)
 
-
 if __name__ == "__main__":
-    no_of_players = int(input("Enter the no of player:"))
+    no_of_players = int(input("Enter the no of players:"))
     player_names = [name for name in input("Enter the name of players:").split()]
     players = [Player(name) for name in player_names]
     game = SnakesAndLadders(players)
 
     while not game.has_finished():
         player = game.next_player()
-        player.play()
-        time.sleep(5)
+        player.roll()
+        player.next_player.roll()
+        if player.roll() > player.next_player.roll():
+             player.play()

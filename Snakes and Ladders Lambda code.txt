@@ -8,7 +8,7 @@ def lambda_handler(event, context):
 SNAKES AND LADDERS GAME
 Created 01.12.2022
 RULE:
-A player will enter the game only if they get 1 on the dice.
+A player will enter the game only if they get at least 1 on the dice.
 After that, if the player gets the number n in the dice, they move forward n boxes
 If there is a ladder in the square the player is currently in, they move to the square where the ladder ends
 If there is a snake in the square the player is currently in, they move to the square with the tail of the snake.
